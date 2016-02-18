@@ -17,6 +17,11 @@ class DomainRecord(models.Model):
     status = models.CharField(max_length=200, blank=True, null=True)
     main_a_record = models.ForeignKey('DnsRecord', limit_choices_to={'is_a_record': True})
 
+    def serialize(self):
+        return {'name': self.name, 'comment': self.comment,
+                'status': self.get_status_display(), 'main_a_record': self.main_a_record,
+                'folder': self.folder.name if self.folder is not None else None}
+
     def __str__(self):
         return self.name
 
