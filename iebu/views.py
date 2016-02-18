@@ -23,7 +23,7 @@ class DomainView(TemplateView):
 
 
 class AdderDomainsView(TemplateView):
-    template_name = "adddomen.html"
+    template_name = "add_domain.html"
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):

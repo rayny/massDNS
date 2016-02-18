@@ -1,0 +1,43 @@
+{% spaceless %}
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <title>DomainChecker: {% block title %}Базовый шаблон{% endblock %}</title>
+        <link rel="icon" type="image/png" href="{{ STATIC_URL }}favic.png"/>
+
+        <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.9/css/jquery.dataTables.css">
+        <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/buttons/1.0.0/css/buttons.dataTables.css">
+
+        {% load staticfiles %}
+
+
+        <style>*{font-family: Arial,sans-serif;}</style>
+
+        {% block context_css %}{% endblock %}
+    <!--{% static "js/jquery.wysibb.min.js" %}-->
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.9/js/jquery.dataTables.js"></script>
+        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/select/1.0.0/js/dataTables.select.min.js"></script>
+        <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/buttons/1.0.0/js/dataTables.buttons.min.js"></script>
+
+        {% block context_js %}{% endblock %}
+    </head>
+
+    <body onload="{% block onload %}{% endblock %}">
+        <nav>
+           <a href="{% url 'list' %}" style="padding: 0.3em;">Список доменов</a>
+           <a href="{% url 'adder' %}" style="padding: 0.3em;">Добавить</a>
+
+            {% if user.is_authenticated %}
+                <a href="/admin/" style="float: right; padding: 0.3em;">Админка</a>
+                <a href="{% url 'logout' %}" style="float: right; padding: 0.3em;">Выйти</a>
+            {% endif %}
+        </nav>
+
+        {% block main %}{% endblock %}
+    </body>
+</html>
+{% endspaceless %}

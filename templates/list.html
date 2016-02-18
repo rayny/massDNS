@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Список доменов{% endblock %}
+
+{% block context_css %}<style>
+.right{float: right;}
+
+table td {
+    text-align: center !important;
+}
+
+table td:nth-child(4), table td:nth-child(5) {
+    white-space: nowrap;
+}
+</style>{% endblock %}
+
+{% block context_js %}<script>
+
+var table;
+var trans = {
+  "processing": "Подождите...",
+  "search": "Поиск:",
+  "lengthMenu": "Отображать _MENU_ записей",
+  "info": "Записи с _START_ до _END_ из _TOTAL_ записей",
+  "infoEmpty": "Записи с 0 до 0 из 0 записей",
+  "infoFiltered": "(отфильтровано из _MAX_ записей)",
+  "infoPostFix": "",
+  "loadingRecords": "Загрузка записей...",
+  "zeroRecords": "Записи отсутствуют.",
+  "emptyTable": "В таблице отсутствуют данные",
+  "paginate": {
+    "first": "Первая",
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "last": "Последняя"
+  },
+  "aria": {
+    "sortAscending": ": активировать для сортировки столбца по возрастанию",
+    "sortDescending": ": активировать для сортировки столбца по убыванию"
+  }
+};
+
+function add_select_search(column) {
+    var select = $('<select><option value=""></option></select>')
+        .appendTo( $(column.footer()).empty() )
+        .on( 'change', function () {
+            var val = $.fn.dataTable.util.escapeRegex(
+                $(this).val()
+            );
+            column
+                .search( val ? '^'+val+'$' : '', true, false )
+                .draw();
+        } );
+
+    column.data().unique().sort().each( function ( d, j ) {
+        select.append( '<option value="'+d+'">'+d+'</option>' )
+    } );
+}
+
+function add_text_search(column) {
+    $('<input>').attr('type', 'text').appendTo($(column.footer()).empty())
+        .on( 'keyup change', function () {
+            if (column.search() !== this.value) {
+                column.search(this.value).draw();
+            }
+        });
+}
+
+function construct_footer() {
+    add_text_search(this.api().column('name:name'));
+    add_text_search(this.api().column('comment:name'));
+    add_text_search(this.api().column('days:name'));
+    add_select_search(this.api().column('status:name'));
+    add_select_search(this.api().column('registrar:name'));
+    add_select_search(this.api().column('folder:name'));
+}
+
+function select_all() {
+    table.$('tr', {"filter":"applied"}).addClass('selected');
+}
+
+function deselect() {
+    table.$('tr').removeClass('selected');
+}
+
+function send(action, data, callback) {
+    req = {action: action, data: JSON.stringify(data),
+        csrfmiddlewaretoken: '{{ csrf_token }}'};
+    $.post('.', req)
+        .success(function (resp) {
+            if (resp.status === 'ok') {
+                callback(resp.data);
+            } else {
+                console.log(resp);
+                alert('Ошибка! Запрос не обработан.');
+            }
+        })
+        .error(function (resp) {
+            console.log(resp);
+            alert('Ошибка! Запрос не обработан.');
+        });
+}
+
+function change_comment() {
+    var data = {}, sel = table.rows('.selected');
+    sel.every(function () {
+        var row = this.data();
+        var new_comment = prompt('Изменить комментарий для ' + 
+            row.name, row.comment);
+        if (new_comment === null) {return;}
+        data[row.name] = new_comment;
+    });
+
+    send('comment', data, function () {
+        sel.every(function () {
+            var d = this.data();
+            comment = data[d['name']];
+            if (comment === undefined) {return;}
+            d.comment = comment;
+            this.data(d).draw();
+        });
+        alert('Комментарии (' + Object.keys(data).length + ') успешно изменены');
+    });
+}
+
+function change_days() {
+    var data = {}, sel = table.rows('.selected');
+    sel.every(function () {
+        var row = this.data();
+        var new_days = prompt('Изменить дни для ' + data.name, row.days);
+        if (new_days === null) {return;}
+        data[row.name] = new_days;
+    });
+
+    send('days', data, function (resp) {
+        sel.every(function () {
+            var d = this.data();
+            days = data[d['name']];
+            if (days === undefined) {return;}
+            d.days = days;
+            d.status = resp[d['name']];
+            this.data(d).draw();
+        });
+        console.log(resp)
+        alert('Дни (' + Object.keys(data).length + ') успешно изменены');
+    });
+}
+
+function add_to_folder(folder) {
+    var data = [], sel = table.rows('.selected');
+
+    sel.every(function () {data.push(this.data().name)});
+
+    send('folder', {folder: folder, names: data}, function () {
+        sel.every(function () {
+            var d = this.data();
+            d.folder = folder;
+            this.data(d).draw();
+        });
+        alert('Домены (' + data.length + ') успешно добавлены в папку "' + folder + '"');
+    });
+}
+
+function update_checked(folder) {
+    var data = [], sel = table.rows('.selected');
+    sel.every(function () {data.push(this.data().name)});
+
+    var url = '{% url 'adder' %}';
+    var names = JSON.stringify(data)
+    window.location = url + '?names=' + names;
+
+}
+
+function delete_checked(folder) {
+    var data = [], sel = table.rows('.selected');
+    sel.every(function () {data.push(this.data().name)});
+
+    send('delete', data, function () {
+        sel.remove().draw();
+        alert('Домены (' + sel.data().length + ') успешно удалены');
+    });
+}
+
+$(document).ready(function() {
+    table = $('#main_table').DataTable( {
+        ajax: {
+            url: './api/',
+            dataSrc: 'data'
+        },
+        columns: [
+            {data: 'name', title: 'Домен', name: 'name'},
+            {data: 'status', title: 'Статус', name: 'status'},
+            {data: 'registrar', title: 'Регистратор',
+                name: 'registrar', defaultContent: 'Н/Д'},
+            {data: 'free_date', title: 'До', defaultContent: 'Н/Д'},
+            {data: 'updated', title: 'Обновлено'},
+            {data: 'comment', title: 'Комментарий', name: 'comment'},
+            {data: 'folder', title: 'Папка',
+                name: 'folder', defaultContent: 'Н/Д'},
+            {data: 'days', title: 'Дней', name: 'days'},
+        ],
+        "lengthMenu": [[10, 100, 1000, 10000, -1],
+            [10, 100, 1000, 10000, 'All']],
+
+        //bFilter: false,
+        initComplete: construct_footer,
+        language: trans,
+        dom: 'B<"right"lr>tip',
+        select: {style: 'multi', info: false},
+        buttons: [
+            {text: 'Выбрать все', action: select_all},
+            {text: 'Снять выделение', action: deselect},
+            {text: 'Изменить комм.', action: change_comment},
+            {text: 'Изменить дни', action: change_days},
+            {text: 'Обновить', action: update_checked},
+            {text: 'Удалить', action: delete_checked},
+        ],
+    } );
+
+});
+</script>{% endblock %}
+
+{% block main %}
+    <h1>Список доменов</h1>
+    <p><span>Добавить в папку: </span>
+        {% for folder in folders %}
+            <button onclick="add_to_folder('{{ folder }}')">{{ folder }}</button>
+        {% endfor %}
+    </p>
+    <table id="main_table" class="display dt-body-center">
+
+        <thead>
+            <tr>
+                <th>Домен</th>
+                <th>Статус</th>
+                <th>Регистратор</th>
+                <th>До</th>
+                <th>Обновлено</th>
+                <th>Комментарий</th>
+                <th>Папка</th>
+                <th>Дней</th>
+            </tr>
+        </thead>
+ 
+        <tfoot>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}
