@@ -4,11 +4,8 @@
 
 {% block context_js %}<script>
 var COLORS = {'error': 'red', 'ok': '#98fb98',
-    'exists': 'yellow', 'updated': '#08c408'},
-    RATELIMIT_WARNING = 'Превышение количества запросов',
-    RATELIMIT_BLOCK = 'Доступ к whois-серверу временно закрыт',
-    RATELIMIT_NOTIF = 'Whois сервер уведомил о превышении количества запросов. Продолжить?',
-    TIMEOUT = 2*1000;
+    'exists': 'yellow', 'updated': '#08c408'};
+
 var domains=[], consider, to_update = false;
 
 function get_domains() {
