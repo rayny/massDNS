@@ -69,10 +69,9 @@ function add_text_search(column) {
 function construct_footer() {
     add_text_search(this.api().column('name:name'));
     add_text_search(this.api().column('comment:name'));
-    add_text_search(this.api().column('days:name'));
     add_select_search(this.api().column('status:name'));
-    add_select_search(this.api().column('registrar:name'));
     add_select_search(this.api().column('folder:name'));
+    add_select_search(this.api().column('main_a_record:name'));
 }
 
 function select_all() {
@@ -123,26 +122,26 @@ function change_comment() {
     });
 }
 
-function change_days() {
+function change_a_record() {
     var data = {}, sel = table.rows('.selected');
     sel.every(function () {
         var row = this.data();
-        var new_days = prompt('Изменить дни для ' + data.name, row.days);
-        if (new_days === null) {return;}
-        data[row.name] = new_days;
+        var new_main_a_record = prompt('Изменить А запись для ' + row.name, row.main_a_record);
+        if (new_main_a_record === null) {return;}
+        data[row.name] = new_main_a_record;
     });
 
-    send('days', data, function (resp) {
+    send('main_a_record', data, function (resp) {
         sel.every(function () {
             var d = this.data();
-            days = data[d['name']];
-            if (days === undefined) {return;}
-            d.days = days;
+            main_a_record = data[d['name']];
+            if (main_a_record === undefined) {return;}
+            d.records = main_a_record;
             d.status = resp[d['name']];
             this.data(d).draw();
         });
         console.log(resp)
-        alert('Дни (' + Object.keys(data).length + ') успешно изменены');
+        alert('Основные А записи (' + Object.keys(data).length + ') успешно изменены');
     });
 }
 
@@ -161,17 +160,8 @@ function add_to_folder(folder) {
     });
 }
 
-function update_checked(folder) {
-    var data = [], sel = table.rows('.selected');
-    sel.every(function () {data.push(this.data().name)});
 
-    var url = '{% url 'adder' %}';
-    var names = JSON.stringify(data)
-    window.location = url + '?names=' + names;
-
-}
-
-function delete_checked(folder) {
+function delete_checked() {
     var data = [], sel = table.rows('.selected');
     sel.every(function () {data.push(this.data().name)});
 
@@ -183,21 +173,17 @@ function delete_checked(folder) {
 
 $(document).ready(function() {
     table = $('#main_table').DataTable( {
-        ajax: {
-            url: './api/',
+        "ajax": {
+            url: '../api/',
             dataSrc: 'data'
         },
         columns: [
-            {data: 'name', title: 'Домен', name: 'name'},
-            {data: 'status', title: 'Статус', name: 'status'},
-            {data: 'registrar', title: 'Регистратор',
-                name: 'registrar', defaultContent: 'Н/Д'},
-            {data: 'free_date', title: 'До', defaultContent: 'Н/Д'},
-            {data: 'updated', title: 'Обновлено'},
-            {data: 'comment', title: 'Комментарий', name: 'comment'},
+            {data: 'name', title: 'Домен', name: 'name', defaultContent: 'Н/Д'},
+            {data: 'status', title: 'Статус', name: 'status', defaultContent: 'Н/Д'},
+            {data: 'comment', title: 'Комментарий', name: 'comment', defaultContent: 'Н/Д'},
             {data: 'folder', title: 'Папка',
                 name: 'folder', defaultContent: 'Н/Д'},
-            {data: 'days', title: 'Дней', name: 'days'},
+            {data: 'main_a_record', title: 'Основная А запись', name: 'main_a_record', defaultContent: 'Н/Д'},
         ],
         "lengthMenu": [[10, 100, 1000, 10000, -1],
             [10, 100, 1000, 10000, 'All']],
@@ -211,11 +197,11 @@ $(document).ready(function() {
             {text: 'Выбрать все', action: select_all},
             {text: 'Снять выделение', action: deselect},
             {text: 'Изменить комм.', action: change_comment},
-            {text: 'Изменить дни', action: change_days},
-            {text: 'Обновить', action: update_checked},
+            {text: 'Изменить главную А запись', action: change_a_record},
             {text: 'Удалить', action: delete_checked},
         ],
     } );
+    alert(table);
 
 });
 </script>{% endblock %}
@@ -233,20 +219,14 @@ $(document).ready(function() {
             <tr>
                 <th>Домен</th>
                 <th>Статус</th>
-                <th>Регистратор</th>
-                <th>До</th>
-                <th>Обновлено</th>
                 <th>Комментарий</th>
                 <th>Папка</th>
-                <th>Дней</th>
+                <th>Основная А запись</th>
             </tr>
         </thead>
  
         <tfoot>
             <tr>
-                <th></th>
-                <th></th>
-                <th></th>
                 <th></th>
                 <th></th>
                 <th></th>

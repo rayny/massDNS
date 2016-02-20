@@ -15,11 +15,11 @@ class DomainRecord(models.Model):
     folder = models.ForeignKey(Folder, blank=True, null=True)
     comment = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=200, blank=True, null=True)
-    main_a_record = models.ForeignKey('DnsRecord', limit_choices_to={'is_a_record': True})
+    main_a_record = models.ForeignKey('DnsRecord', limit_choices_to={'type': 'A'}, blank=True, null=True)
 
     def serialize(self):
         return {'name': self.name, 'comment': self.comment,
-                'status': self.get_status_display(), 'main_a_record': self.main_a_record,
+                'status': self.status, 'main_a_record': self.main_a_record.value,
                 'folder': self.folder.name if self.folder is not None else None}
 
     def __str__(self):
@@ -41,11 +41,8 @@ class DnsRecord(models.Model):
     value = models.CharField(max_length=400)
     domain = models.ForeignKey(DomainRecord)
 
-    def is_a_record(self):
-        return self.type == 'A'
-
     def __str__(self):
-        return self.name
+        return self.name + ':' + self.value
 
 
 class RedirectRecord(models.Model):

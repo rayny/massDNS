@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление доменов{% endblock %}
+
+{% block context_js %}<script>
+var COLORS = {'error': 'red', 'ok': '#98fb98',
+    'exists': 'yellow', 'updated': '#08c408'},
+    RATELIMIT_WARNING = 'Превышение количества запросов',
+    RATELIMIT_BLOCK = 'Доступ к whois-серверу временно закрыт',
+    RATELIMIT_NOTIF = 'Whois сервер уведомил о превышении количества запросов. Продолжить?',
+    TIMEOUT = 2*1000;
+var domains=[], consider, to_update = false;
+
+function get_domains() {
+    var d = $('#input').val().split('\n');
+    for (var i = 0; i < d.length; i += 1) {
+        if (d[i] != "") {domains.push(d[i]);}
+    }
+}
+
+function add_row(domain, status, info) {
+    var st, tr = $('<tr>').insertAfter($('#head'));
+    $('<td>').text(domain).appendTo(tr);
+    st = $('<td>').appendTo(tr);
+    $('<td>').text(info).appendTo(tr);
+
+    console.log([domain, status, info])
+    if (status === 'added') {
+        st.css('background-color', COLORS.ok).text('Добавлен');
+    } else if (status === 'updated') {
+        st.css('background-color', COLORS.updated).text('Обновлён');
+    } else if (status === 'exists') {
+        st.css('background-color', COLORS.exists).text('Существует');
+    } else if (status === 'error')  {
+        st.css('background-color', COLORS.error).text('Ошибка');
+    } else {
+        st.css('background-color', COLORS.error).text('Ошибка сервера');
+    }
+}
+
+function post(i) {
+    $.post('.', {domain: domains[i], update: to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
+        .success(function (resp) {
+            var status, text = '', ratelimit = false, ratelimit_block = false;
+            if (resp.status === 'ok') {
+                status = resp.data.status;
+
+                if (resp.data.free === undefined) {
+                    text = 'Свободен';
+                } else {
+                    text = 'Занят до: ' + resp.data.free;
+                }
+            } else {
+                status = 'error';
+                text = resp.msg;
+                ratelimit = resp.msg === RATELIMIT_WARNING;
+                ratelimit_block = resp.msg === RATELIMIT_BLOCK;
+            }
+            add_row(domains[i], status, text);
+
+            if (ratelimit_block) {
+                alert(RATELIMIT_BLOCK);
+                return;
+            }
+
+            if (ratelimit) {
+                if (confirm(RATELIMIT_NOTIF)) {
+                    run_whois(i);
+                } else {return;}
+            } else {
+                run_whois(i+1);
+            }
+        })
+        .error(function () {
+            add_row(domains[i], 'server_error', '');
+            run_whois(i+1);
+        });
+}
+
+function run_whois(i) {
+    if (i === undefined) {i=0;}
+    if (i === domains.length) {
+        alert('Добавление закончено');
+        return;
+    }
+
+    if (consider) {
+        setTimeout(function() {post(i);}, TIMEOUT);
+    } else {
+        post(i);
+    }
+}
+
+function create_table() {
+    var table = $('<table>').insertAfter('h1');
+    $('<tr>').attr('id', 'head').appendTo(table).append('<th>Домен</th>')
+        .append("<th>Статус</th>").append("<th>Информация</th>");
+}
+
+function add() {
+    get_domains();
+    
+    $('#inputs').hide();
+    consider = $('#consider').is(':checked');
+    to_update = $('#to_update').is(':checked');
+
+    create_table();
+
+    run_whois();
+}
+{% if names %}
+$(document).ready(function() {
+    $('#add_button').click();
+});
+{% endif %}
+</script>{% endblock %}
+
+{% block main %}<h1>Добавление доменов</h1>
+
+    <div id="inputs">
+        <textarea id="input" cols=80 rows="30" autofocus="true">{% if names %}{% for name in names %}{{ name }}{% if not forloop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
+        <p><button id="add_button" onclick="add()"">Добавить</button></p>
+        <p>Обновлять существующие? <input id="to_update" type="checkbox"{% if names %} checked="true"{% endif %}/></p>
+        <p>Учитывать ограничение частоты запросов? <input id="consider" type="checkbox" /></p>
+    </div>
+{% endblock %}
