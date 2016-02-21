@@ -2,8 +2,9 @@ from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from .models import DomainRecord, DnsRecord, Folder, RedirectRecord
-from .json_resp import get_ok
+from .json_resp import get_ok, get_error
 import json
+from iebu_project.settings import DEFAULT_IP
 # Create your views here.
 
 
@@ -57,6 +58,37 @@ class AdderDomainsView(TemplateView):
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(AdderDomainsView, self).dispatch(*args, **kwargs)
+
+    @method_decorator(login_required)
+    def post(self, request):
+        domain = request.POST['domain'].lower()
+        update = request.POST['update'] == 'true'
+        save_domain(domain, update, DEFAULT_IP)
+
+        return get_ok()
+
+
+def save_domain(domain, update, ip):
+    try:
+        dom = DomainRecord.objects.get(name=domain)
+        main_rec = dom.main_a_record
+        if update:
+            if main_rec:
+                main_rec.value = ip
+                main_rec.save()
+            else:
+                main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
+                main_rec.save()
+        elif not main_rec:
+            main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
+            main_rec.save()
+    except DomainRecord.DoesNotExist:
+        dom = DomainRecord(name=domain)
+        dom.save()
+        main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
+        main_rec.save()
+        dom.main_a_record = main_rec
+        dom.save()
 
 
 def dirs_processor(request):

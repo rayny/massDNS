@@ -22,7 +22,7 @@ function add_row(domain, status, info) {
     $('<td>').text(info).appendTo(tr);
 
     console.log([domain, status, info])
-    if (status === 'added') {
+    if (status === 'ok') {
         st.css('background-color', COLORS.ok).text('Добавлен');
     } else if (status === 'updated') {
         st.css('background-color', COLORS.updated).text('Обновлён');
@@ -36,56 +36,36 @@ function add_row(domain, status, info) {
 }
 
 function post(i) {
-    $.post('.', {domain: domains[i], update: to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
+    $.post('.', {domain: domains[i], update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
         .success(function (resp) {
-            var status, text = '', ratelimit = false, ratelimit_block = false;
+            alert('sdfsdfaasd')
+            var status, text = '';
             if (resp.status === 'ok') {
-                status = resp.data.status;
+                status = resp.status;
 
-                if (resp.data.free === undefined) {
-                    text = 'Свободен';
-                } else {
-                    text = 'Занят до: ' + resp.data.free;
-                }
             } else {
                 status = 'error';
                 text = resp.msg;
-                ratelimit = resp.msg === RATELIMIT_WARNING;
-                ratelimit_block = resp.msg === RATELIMIT_BLOCK;
             }
             add_row(domains[i], status, text);
+            run_adder(i+1);
 
-            if (ratelimit_block) {
-                alert(RATELIMIT_BLOCK);
-                return;
-            }
-
-            if (ratelimit) {
-                if (confirm(RATELIMIT_NOTIF)) {
-                    run_whois(i);
-                } else {return;}
-            } else {
-                run_whois(i+1);
-            }
         })
         .error(function () {
             add_row(domains[i], 'server_error', '');
-            run_whois(i+1);
+            run_adder(i+1);
         });
 }
 
-function run_whois(i) {
+function run_adder(i) {
     if (i === undefined) {i=0;}
     if (i === domains.length) {
         alert('Добавление закончено');
         return;
     }
 
-    if (consider) {
-        setTimeout(function() {post(i);}, TIMEOUT);
-    } else {
         post(i);
-    }
+
 }
 
 function create_table() {
@@ -98,27 +78,21 @@ function add() {
     get_domains();
     
     $('#inputs').hide();
-    consider = $('#consider').is(':checked');
     to_update = $('#to_update').is(':checked');
+
 
     create_table();
 
-    run_whois();
+    run_adder();
 }
-{% if names %}
-$(document).ready(function() {
-    $('#add_button').click();
-});
-{% endif %}
+
 </script>{% endblock %}
 
 {% block main %}<h1>Добавление доменов</h1>
 
     <div id="inputs">
-        <textarea id="input" cols=80 rows="30" autofocus="true">{% if names %}{% for name in names %}{{ name }}{% if not forloop.last %}
-{% endif %}{% endfor %}{% endif %}</textarea>
-        <p><button id="add_button" onclick="add()"">Добавить</button></p>
-        <p>Обновлять существующие? <input id="to_update" type="checkbox"{% if names %} checked="true"{% endif %}/></p>
-        <p>Учитывать ограничение частоты запросов? <input id="consider" type="checkbox" /></p>
+        <textarea id="input" cols=80 rows="30" autofocus="true"></textarea>
+        <p><button id="add_button" onclick="add()">Добавить</button></p>
+        <p>Обновлять существующие? <input id="to_update" type="checkbox"/></p>
     </div>
 {% endblock %}
