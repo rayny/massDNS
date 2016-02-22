@@ -15,7 +15,8 @@ class DomainRecord(models.Model):
     folder = models.ForeignKey(Folder, blank=True, null=True)
     comment = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=200, blank=True, null=True)
-    main_a_record = models.ForeignKey('DnsRecord', limit_choices_to={'type': 'A'}, blank=True, null=True)
+    main_a_record = models.ForeignKey('DnsRecord', limit_choices_to={'type': 'A'}, blank=True, null=True,
+                                      on_delete=models.SET_NULL)
 
     def serialize(self):
         return {'name': self.name, 'comment': self.comment,

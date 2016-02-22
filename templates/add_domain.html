@@ -36,9 +36,8 @@ function add_row(domain, status, info) {
 }
 
 function post(i) {
-    $.post('.', {domain: domains[i], update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
+    $.post('.', {domain: domains[i], action: 'add', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
         .success(function (resp) {
-            alert('sdfsdfaasd')
             var status, text = '';
             if (resp.status === 'ok') {
                 status = resp.status;
@@ -57,15 +56,22 @@ function post(i) {
         });
 }
 
+
+var reload_success;
+function run_reload(i) {
+    $.post('.', {domain: domains[i-1], action: 'reload', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
+        .success(function () {
+        })
+}
+
 function run_adder(i) {
     if (i === undefined) {i=0;}
     if (i === domains.length) {
+        run_reload(i)
         alert('Добавление закончено');
         return;
     }
-
         post(i);
-
 }
 
 function create_table() {

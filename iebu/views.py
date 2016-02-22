@@ -5,6 +5,7 @@ from .models import DomainRecord, DnsRecord, Folder, RedirectRecord
 from .json_resp import get_ok, get_error
 import json
 from iebu_project.settings import DEFAULT_IP
+from .filerenderer import rebuild_dns, reload_dns
 # Create your views here.
 
 
@@ -63,7 +64,10 @@ class AdderDomainsView(TemplateView):
     def post(self, request):
         domain = request.POST['domain'].lower()
         update = request.POST['update'] == 'true'
-        save_domain(domain, update, DEFAULT_IP)
+        if request.POST['action'] == 'reload':
+            reload_dns()
+        else:
+            save_domain(domain, update, DEFAULT_IP)
 
         return get_ok()
 
@@ -76,12 +80,15 @@ def save_domain(domain, update, ip):
             if main_rec:
                 main_rec.value = ip
                 main_rec.save()
+                rebuild_dns(domain)
             else:
                 main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
                 main_rec.save()
+                rebuild_dns(domain)
         elif not main_rec:
             main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
             main_rec.save()
+            rebuild_dns(domain)
     except DomainRecord.DoesNotExist:
         dom = DomainRecord(name=domain)
         dom.save()
@@ -89,6 +96,7 @@ def save_domain(domain, update, ip):
         main_rec.save()
         dom.main_a_record = main_rec
         dom.save()
+        rebuild_dns(domain)
 
 
 def dirs_processor(request):
