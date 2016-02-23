@@ -92,13 +92,63 @@ function add() {
     run_adder();
 }
 
+var items=1;
+function AddItem() {
+  var div=document.getElementById("items1");
+  var button=document.getElementById("add");
+  items++;
+  var newitem="<strong>имя " + items + ": </strong>";
+  newitem+="<input type=\"text\" name=\"item" + items;
+  newitem+="\" id=\"name"+items+"\" size=\"10\">";
+  newitem+="<strong>тип " + items + ": </strong>";
+  newitem+="<select id=\"sel"+items+"\"><option selected value=\"A\">А-запись</option><option value=\"MX\">MX-запись</option> \
+                <option value=\"CNAME\">CNAME-запись</option><option value=\"TXT\">TXT-запись</option></select>";
+  newitem+="<strong>значение " + items + ": </strong>";
+  newitem+="<input type=\"text\" name=\"item" + items;
+  newitem+="\" id=\"value"+items;
+  newitem+="\" size=\"10\"><br>";
+  var newnode=document.createElement("span");
+  newnode.innerHTML=newitem;
+  div.insertBefore(newnode,button);
+}
+
+
 </script>{% endblock %}
 
 {% block main %}<h1>Добавление доменов</h1>
-
+<style>
+#inputs2  {
+    display: none;
+}
+#add_redirect:checked ~ #inputs2 {
+    display: block;
+}
+</style>
     <div id="inputs">
         <textarea id="input" cols=80 rows="30" autofocus="true"></textarea>
         <p><button id="add_button" onclick="add()">Добавить</button></p>
         <p>Обновлять существующие? <input id="to_update" type="checkbox"/></p>
-    </div>
+        <div>
+                добавить редирект
+                <input id="add_redirect" type="checkbox" />
+                <div id="inputs2">
+                  <textarea id="redirect" cols=50 rows="1" placeholder="Введите URL"> </textarea>
+                </div>
+        </div>
+
+        <br/>
+        <div ID="items1">
+
+
+              <strong>имя 1: </strong><input type="text" id="name1" value="@" name="item1" size="10">
+              <strong>тип 1: </strong>
+              <select id="sel1">
+                <option selected value="A">А-запись</option>
+                <option value="MX">MX-запись</option>
+                <option value="CNAME">CNAME-запись</option>
+                <option value="TXT">TXT-запись</option>
+              </select>
+              <strong>значение 1: </strong><input type="text" id="value1" value="{{ default_ip }}" name="item1" size="10"><br>
+              <input type="button" value="Добавить DNS запись" onClick="AddItem();" ID="add">
+    </div> </div>
 {% endblock %}

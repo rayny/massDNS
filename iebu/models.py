@@ -30,7 +30,6 @@ class DomainRecord(models.Model):
 TYPES = (
     ('A', 'A-запись'),
     ('MX', 'MX-запись'),
-    ('SOA', 'SOA-запись'),
     ('CNAME', 'CNAME-запись'),
     ('TXT', 'TXT-запись'),
 )

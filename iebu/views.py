@@ -101,3 +101,7 @@ def save_domain(domain, update, ip):
 
 def dirs_processor(request):
     return {'folders': [f.name for f in Folder.objects.all()]}
+
+
+def default_ip_processor(request):
+    return {'default_ip': str(DEFAULT_IP)}

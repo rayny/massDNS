@@ -60,3 +60,10 @@ def rebuild_dns(domain):
         f = open(filename, 'x')
     f.write(source)
     f.close()
+
+
+def _nginx_str_create():
+    result=""
+    source = source = DomainRecord.objects.all()
+    for domain in source:
+        pass
