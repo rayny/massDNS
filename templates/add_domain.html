@@ -55,7 +55,6 @@ function post(i) {
     } else {
         args = {domain: domains[i], redirect:add_redirect, records:records2, action: 'add', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'}
     }
-    alert(JSON.stringify(args));
     $.post('.', args)
         .success(function (resp) {
             var status, text = '';

@@ -63,11 +63,23 @@ def rebuild_dns(domain):
 
 
 def _nginx_str_create():
-    result=""
-    source = source = DomainRecord.objects.all()
+    result = ""
+    source = DomainRecord.objects.all()
     for domain in source:
-        pass
+        for redirect in domain.redirectrecord_set.all():
+            result += "server {\n\ listen 80;\n  server_name  "+domain.name+";\n\
+                       rewrite ^ "+redirect.value+"$request_uri? permanent;\n}"
+    return result
 
 
 def reload_nginx():
-    pass
+    os.chdir(basedir)
+    source = _nginx_str_create()
+    try:
+        f = open('iebu_nginx.conf', 'x')
+    except FileExistsError:
+        os.rename('iebu_nginx.conf', 'iebu_nginx.conf_old')
+        f = open('iebu_nginx.conf', 'x')
+
+    f.write(source)
+    f.close()

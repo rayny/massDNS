@@ -67,12 +67,10 @@ class AdderDomainsView(TemplateView):
         if request.POST['action'] == 'reload':
             reload_dns()
         elif request.POST['redirect'] == 'true':
-            print(json.loads(request.POST['records']))
             save_domain(domain, update, request.POST['records'])
             save_redirect(domain, update, request.POST['redir'])
         else:
             save_domain(domain, update, request.POST['records'])
-            print(json.loads(request.POST['records']))
 
         return get_ok()
 
