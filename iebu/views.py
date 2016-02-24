@@ -5,7 +5,7 @@ from .models import DomainRecord, DnsRecord, Folder, RedirectRecord
 from .json_resp import get_ok, get_error
 import json
 from iebu_project.settings import DEFAULT_IP
-from .filerenderer import rebuild_dns, reload_dns
+from .filerenderer import rebuild_dns, reload_dns, reload_nginx
 # Create your views here.
 
 
@@ -66,36 +66,89 @@ class AdderDomainsView(TemplateView):
         update = request.POST['update'] == 'true'
         if request.POST['action'] == 'reload':
             reload_dns()
+        elif request.POST['redirect'] == 'true':
+            print(json.loads(request.POST['records']))
+            save_domain(domain, update, request.POST['records'])
+            save_redirect(domain, update, request.POST['redir'])
         else:
-            save_domain(domain, update, DEFAULT_IP)
+            save_domain(domain, update, request.POST['records'])
+            print(json.loads(request.POST['records']))
 
         return get_ok()
 
 
-def save_domain(domain, update, ip):
+def save_redirect(domain, update, redirect):
+    dom = DomainRecord.objects.get(name=domain)
+    try:
+        red1 = dom.redirectrecord_set.get(name="/")
+        if update:
+            red1.value = redirect
+            reload_nginx()
+    except (KeyError, RedirectRecord.DoesNotExist):
+        red1 = RedirectRecord(domain=dom, value=redirect, name="/")
+        red1.save()
+        reload_nginx()
+
+
+def save_domain(domain, update, records):
+    records1 = json.loads(records)
     try:
         dom = DomainRecord.objects.get(name=domain)
         main_rec = dom.main_a_record
         if update:
             if main_rec:
-                main_rec.value = ip
-                main_rec.save()
+                for rec in records1:
+                    if rec['name'] == '@' and rec['type'] == 'A':
+                        main_rec.value = rec['value']
+                        main_rec.save()
+                    else:
+                        try:
+                            mrec = dom.dnsrecord_set.get(name=rec['name'], type=rec['type'])
+                            mrec.value = rec['value']
+                            mrec.save()
+                        except DnsRecord.DoesNotExist:
+                            mrec = DnsRecord(domain=dom, name=rec['name'], type=rec['type'], value=rec['value'])
+                            mrec.save()
                 rebuild_dns(domain)
             else:
-                main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
-                main_rec.save()
+                for rec in records1:
+                        try:
+                            mrec = dom.dnsrecord_set.get(name=rec['name'], type=rec['type'])
+                            mrec.value = rec['value']
+                            mrec.save()
+                            if mrec.name == '@' and mrec.type == 'A':
+                                dom.main_a_record = mrec
+                                dom.save()
+                        except DnsRecord.DoesNotExist:
+                            mrec = DnsRecord(domain=dom, name=rec['name'], type=rec['type'], value=rec['value'])
+                            mrec.save()
+                            if mrec.name == '@' and mrec.type == 'A':
+                                dom.main_a_record = mrec
+                                dom.save()
                 rebuild_dns(domain)
-        elif not main_rec:
-            main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
-            main_rec.save()
+        else:
+            for rec in records1:
+                try:
+                    mrec = dom.dnsrecord_set.get(name=rec['name'], type=rec['type'])
+                    if (mrec.name == '@' and mrec.type == 'A') and not main_rec:
+                        dom.main_a_record = mrec
+                        dom.save()
+                except DnsRecord.DoesNotExist:
+                    mrec = DnsRecord(domain=dom, name=rec['name'], type=rec['type'], value=rec['value'])
+                    mrec.save()
+                    if mrec.name == '@' and mrec.type == 'A':
+                        dom.main_a_record = mrec
+                        dom.save()
             rebuild_dns(domain)
     except DomainRecord.DoesNotExist:
         dom = DomainRecord(name=domain)
         dom.save()
-        main_rec = DnsRecord(domain=dom, name='@', type='A', value=ip)
-        main_rec.save()
-        dom.main_a_record = main_rec
-        dom.save()
+        for rec in records1:
+            mrec = DnsRecord(domain=dom, name=rec['name'], type=rec['type'], value=rec['value'])
+            mrec.save()
+            if mrec.name == '@' and mrec.type == 'A':
+                dom.main_a_record = mrec
+                dom.save()
         rebuild_dns(domain)
 
 

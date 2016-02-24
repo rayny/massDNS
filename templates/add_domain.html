@@ -6,9 +6,21 @@
 var COLORS = {'error': 'red', 'ok': '#98fb98',
     'exists': 'yellow', 'updated': '#08c408'};
 
-var domains=[], consider, to_update = false;
+var domains=[], redirects, records=[], consider, to_update = false, add_redirect=false;
 
 function get_domains() {
+    redirects = $("#redirect").val();
+    var index1, index2, index3, name1, type1, value1;
+    for (var i2 = 1; i2 < items+1; i2 += 1) {
+
+        index1 = "#name"+i2;
+        index2 = "#sel"+i2;
+        index3 = "#value"+i2;
+        name1 = $(index1).val();
+        type1 = $(index2).val();
+        value1 = $(index3).val();
+        records.push({'name':name1, 'type':type1, 'value':value1});
+    }
     var d = $('#input').val().split('\n');
     for (var i = 0; i < d.length; i += 1) {
         if (d[i] != "") {domains.push(d[i]);}
@@ -36,7 +48,15 @@ function add_row(domain, status, info) {
 }
 
 function post(i) {
-    $.post('.', {domain: domains[i], action: 'add', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'})
+    var args, records2;
+    records2 = JSON.stringify(records);
+    if (add_redirect) {
+        args = {domain: domains[i], redir:redirects, redirect:add_redirect, records:records2, action: 'add', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'};
+    } else {
+        args = {domain: domains[i], redirect:add_redirect, records:records2, action: 'add', update:to_update, csrfmiddlewaretoken: '{{ csrf_token }}'}
+    }
+    alert(JSON.stringify(args));
+    $.post('.', args)
         .success(function (resp) {
             var status, text = '';
             if (resp.status === 'ok') {
@@ -85,6 +105,7 @@ function add() {
     
     $('#inputs').hide();
     to_update = $('#to_update').is(':checked');
+    add_redirect = $('#add_redirect').is(':checked');
 
 
     create_table();
@@ -127,12 +148,12 @@ function AddItem() {
     <div id="inputs">
         <textarea id="input" cols=80 rows="30" autofocus="true"></textarea>
         <p><button id="add_button" onclick="add()">Добавить</button></p>
-        <p>Обновлять существующие? <input id="to_update" type="checkbox"/></p>
+        <p>Обновлять существующие? <input id="to_update" type="checkbox" checked="true"/></p>
         <div>
                 добавить редирект
                 <input id="add_redirect" type="checkbox" />
                 <div id="inputs2">
-                  <textarea id="redirect" cols=50 rows="1" placeholder="Введите URL"> </textarea>
+                  <input id="redirect" type="url" placeholder="Введите URL"> </input>
                 </div>
         </div>
 

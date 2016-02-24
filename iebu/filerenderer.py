@@ -67,3 +67,7 @@ def _nginx_str_create():
     source = source = DomainRecord.objects.all()
     for domain in source:
         pass
+
+
+def reload_nginx():
+    pass
