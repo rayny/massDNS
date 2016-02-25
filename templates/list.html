@@ -189,11 +189,19 @@ $(document).ready(function() {
             [10, 100, 1000, 10000, 'All']],
 
         //bFilter: false,
-        initComplete: construct_footer,
+        "initComplete": function() {
+            add_text_search(this.api().column('name:name'));
+            add_text_search(this.api().column('comment:name'));
+            add_select_search(this.api().column('status:name'));
+            add_select_search(this.api().column('folder:name'));
+            add_select_search(this.api().column('main_a_record:name'));
+            makelinks()
+        },
         language: trans,
         dom: 'B<"right"lr>tip',
         select: {style: 'multi', info: false},
         buttons: [
+            {text: 'Внести Записи', action: change_checked},
             {text: 'Выбрать все', action: select_all},
             {text: 'Снять выделение', action: deselect},
             {text: 'Изменить комм.', action: change_comment},
@@ -203,6 +211,24 @@ $(document).ready(function() {
     } );
 
 });
+
+function change_checked() {
+    var data = [], sel = table.rows('.selected');
+    sel.every(function () {data.push(this.data().name)});
+
+    var url = '{% url 'adder' %}';
+    var names = JSON.stringify(data)
+    window.location = url + '?names=' + names
+}
+
+function makelinks() {
+$(".sorting_1").html(function(index, oldHtml) {
+    var url = '{% url 'detail' %}';
+    var str1;
+    url+='?name='+oldHtml;
+    str1 = "<a href=\""+url+"\">"+oldHtml+"</a>";
+    return str1
+});}
 </script>{% endblock %}
 
 {% block main %}

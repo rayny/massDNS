@@ -145,7 +145,8 @@ function AddItem() {
 }
 </style>
     <div id="inputs">
-        <textarea id="input" cols=80 rows="30" autofocus="true"></textarea>
+        <textarea id="input" cols=80 rows="30" autofocus="true">{% if names %}{% for name in names %}{{ name }}{% if not forloop.last %}
+{% endif %}{% endfor %}{% endif %}</textarea>
         <p><button id="add_button" onclick="add()">Добавить</button></p>
         <p>Обновлять существующие? <input id="to_update" type="checkbox" checked="true"/></p>
         <div>

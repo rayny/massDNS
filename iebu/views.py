@@ -57,6 +57,13 @@ class DomainView(TemplateView):
 class AdderDomainsView(TemplateView):
     template_name = "add_domain.html"
 
+    def get_context_data(self, *args, **kwargs):
+        context = super(AdderDomainsView, self).get_context_data(*args, **kwargs)
+        request = self.request
+        context['names'] = json.loads(request.GET['names']) \
+            if 'names' in request.GET else None
+        return context
+
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
         return super(AdderDomainsView, self).dispatch(*args, **kwargs)
@@ -81,12 +88,12 @@ class DomainDetailView(TemplateView):
 
     @method_decorator(login_required)
     def dispatch(self, *args, **kwargs):
-        return super(AdderDomainsView, self).dispatch(*args, **kwargs)
+        return super(DomainDetailView, self).dispatch(*args, **kwargs)
 
     def get_context_data(self, *args, **kwargs):
         context = super(DomainDetailView, self).get_context_data(*args, **kwargs)
         request = self.request
-        context['name'] = json.loads(request.GET['name'])
+        context['name'] = request.GET['name']
         return context
 
     @method_decorator(login_required)
@@ -94,12 +101,13 @@ class DomainDetailView(TemplateView):
         action = request.POST['action']
         data = json.loads(request.POST['data'])
         domain = DomainRecord.objects.get(name=request.POST['domain'])
+        print(data)
         if action == 'delete':
-            for name, type1 in data:
-                if type1 == 'redirect':
-                    domain.redirectrecord_set.get(name=name).delete()
+            for record in data:
+                if record['type'] == 'redirect':
+                    domain.redirectrecord_set.get(name=record['name']).delete()
                 else:
-                    domain.dnsrecord_set.get(name=name, type=type1).delete()
+                    domain.dnsrecord_set.get(name=record['name'], type=record['type']).delete()
             return get_ok()
 
 
@@ -107,7 +115,7 @@ class DomainDetailApiView(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request):
-        dom = DomainRecord.objects.get(name=request['name'])
+        dom = DomainRecord.objects.get(name=request.GET['name'])
         data = dom.serial_detail()
         return get_ok(data)
 

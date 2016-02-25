@@ -2,10 +2,22 @@
 
 {% block title %}Детализация домена {{ name }}{% endblock %}
 
+{% block context_css %}<style>
+.right{float: right;}
+
+table td {
+    text-align: center !important;
+}
+
+table td:nth-child(4), table td:nth-child(5) {
+    white-space: nowrap;
+}
+</style>{% endblock %}
+
 {% block context_js %}<script>
 
 var table;
-var name={{ name }};
+var name="{{ name }}";
 var trans = {
   "processing": "Подождите...",
   "search": "Поиск:",
@@ -23,6 +35,7 @@ var trans = {
     "next": "Следующая",
     "last": "Последняя"
   },
+
   "aria": {
     "sortAscending": ": активировать для сортировки столбца по возрастанию",
     "sortDescending": ": активировать для сортировки столбца по убыванию"
@@ -68,7 +81,7 @@ function delete_checked() {
 $(document).ready(function() {
     table = $('#main_table').DataTable( {
         "ajax": {
-            url: './api_detail/',
+            url: '../api_detail/',
             dataSrc: 'data',
             data: {"name":name},
         },
@@ -77,6 +90,9 @@ $(document).ready(function() {
             {data: 'type', title: 'Тип', name: 'type', defaultContent: 'Н/Д'},
             {data: 'value', title: 'Значение', name: 'value', defaultContent: 'Н/Д'},
         ],
+
+        "lengthMenu": [[10, 100, 1000, 10000, -1],
+            [10, 100, 1000, 10000, 'All']],
 
         //bFilter: false,
         language: trans,
