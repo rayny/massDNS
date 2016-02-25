@@ -23,6 +23,14 @@ class DomainRecord(models.Model):
                 'status': self.status, 'main_a_record': self.main_a_record.value,
                 'folder': self.folder.name if self.folder is not None else None}
 
+    def serial_detail(self):
+        result = []
+        for record in self.dnsrecord_set.all():
+            result.append({'name': record.name, 'type': record.type, 'value': record.value})
+        for record in self.redirectrecord_set.all():
+            result.append({'name': record.name, 'type': 'redirect', 'value': record.value})
+        return result
+
     def __str__(self):
         return self.name
 

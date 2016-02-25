@@ -49,7 +49,8 @@ class DomainView(TemplateView):
                 d.save()
             return get_ok()
         elif action == 'delete':
-            for name in data: DomainRecord.objects.get(name=name).delete()
+            for name in data:
+                DomainRecord.objects.get(name=name).delete()
             return get_ok()
 
 
@@ -73,6 +74,42 @@ class AdderDomainsView(TemplateView):
             save_domain(domain, update, request.POST['records'])
 
         return get_ok()
+
+
+class DomainDetailView(TemplateView):
+    template_name = "detail.html"
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        return super(AdderDomainsView, self).dispatch(*args, **kwargs)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(DomainDetailView, self).get_context_data(*args, **kwargs)
+        request = self.request
+        context['name'] = json.loads(request.GET['name'])
+        return context
+
+    @method_decorator(login_required)
+    def post(self, request):
+        action = request.POST['action']
+        data = json.loads(request.POST['data'])
+        domain = DomainRecord.objects.get(name=request.POST['domain'])
+        if action == 'delete':
+            for name, type1 in data:
+                if type1 == 'redirect':
+                    domain.redirectrecord_set.get(name=name).delete()
+                else:
+                    domain.dnsrecord_set.get(name=name, type=type1).delete()
+            return get_ok()
+
+
+class DomainDetailApiView(TemplateView):
+
+    @method_decorator(login_required)
+    def get(self, request):
+        dom = DomainRecord.objects.get(name=request['name'])
+        data = dom.serial_detail()
+        return get_ok(data)
 
 
 def save_redirect(domain, update, redirect):

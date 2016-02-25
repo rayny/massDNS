@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Детализация домена {{ name }}{% endblock %}
+
+{% block context_js %}<script>
+
+var table;
+var name={{ name }};
+var trans = {
+  "processing": "Подождите...",
+  "search": "Поиск:",
+  "lengthMenu": "Отображать _MENU_ записей",
+  "info": "Записи с _START_ до _END_ из _TOTAL_ записей",
+  "infoEmpty": "Записи с 0 до 0 из 0 записей",
+  "infoFiltered": "(отфильтровано из _MAX_ записей)",
+  "infoPostFix": "",
+  "loadingRecords": "Загрузка записей...",
+  "zeroRecords": "Записи отсутствуют.",
+  "emptyTable": "В таблице отсутствуют данные",
+  "paginate": {
+    "first": "Первая",
+    "previous": "Предыдущая",
+    "next": "Следующая",
+    "last": "Последняя"
+  },
+  "aria": {
+    "sortAscending": ": активировать для сортировки столбца по возрастанию",
+    "sortDescending": ": активировать для сортировки столбца по убыванию"
+  }
+};
+
+function select_all() {
+    table.$('tr', {"filter":"applied"}).addClass('selected');
+}
+
+function deselect() {
+    table.$('tr').removeClass('selected');
+}
+
+function send(action, data, callback) {
+    req = {action: action, domain:name, data: JSON.stringify(data),
+        csrfmiddlewaretoken: '{{ csrf_token }}'};
+    $.post('.', req)
+        .success(function (resp) {
+            if (resp.status === 'ok') {
+                callback(resp.data);
+            } else {
+                console.log(resp);
+                alert('Ошибка! Запрос не обработан.');
+            }
+        })
+        .error(function (resp) {
+            console.log(resp);
+            alert('Ошибка! Запрос не обработан.');
+        });
+}
+
+function delete_checked() {
+    var data = [], sel = table.rows('.selected');
+    sel.every(function () {data.push({'name':this.data().name, 'type':this.data().type})});
+
+    send('delete', data, function () {
+        sel.remove().draw();
+        alert('Записи (' + sel.data().length + ') успешно удалены');
+    });
+}
+
+$(document).ready(function() {
+    table = $('#main_table').DataTable( {
+        "ajax": {
+            url: './api_detail/',
+            dataSrc: 'data',
+            data: {"name":name},
+        },
+        columns: [
+            {data: 'name', title: 'Запись', name: 'name', defaultContent: 'Н/Д'},
+            {data: 'type', title: 'Тип', name: 'type', defaultContent: 'Н/Д'},
+            {data: 'value', title: 'Значение', name: 'value', defaultContent: 'Н/Д'},
+        ],
+
+        //bFilter: false,
+        language: trans,
+        dom: 'B<"right"lr>tip',
+        select: {style: 'multi', info: false},
+        buttons: [
+            {text: 'Выбрать все', action: select_all},
+            {text: 'Снять выделение', action: deselect},
+            {text: 'Удалить', action: delete_checked},
+        ],
+    } );
+
+});
+
+
+</script>{% endblock %}
+
+{% block main %}
+    <h1>Детализация по домену {{ name }}</h1>
+
+    <table id="main_table" class="display dt-body-center">
+
+        <thead>
+            <tr>
+                <th>Запись</th>
+                <th>Тип</th>
+                <th>Значение</th>
+            </tr>
+        </thead>
+
+        <tfoot>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}

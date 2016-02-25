@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from iebu.views import DomainApiView, DomainView, AdderDomainsView
+from iebu.views import DomainApiView, DomainView, AdderDomainsView, DomainDetailView, DomainDetailApiView
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
@@ -23,4 +23,6 @@ urlpatterns = [
     url(r'^$', DomainView.as_view(), name='list'),
     url(r'^add/$', AdderDomainsView.as_view(), name='adder'),
     url(r'^api/$', DomainApiView.as_view(), name='api'),
+    url(r'^domain/$', DomainDetailView.as_view(), name='detail'),
+    url(r'^api_detail/$', DomainDetailApiView.as_view(), name='api_detail')
 ]
