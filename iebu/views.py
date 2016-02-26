@@ -6,7 +6,11 @@ from .json_resp import get_ok, get_error
 import json
 from iebu_project.settings import DEFAULT_IP
 from .filerenderer import rebuild_dns, reload_dns, reload_nginx
+import logging
+from datetime import datetime
 # Create your views here.
+
+logger = logging.getLogger('django')
 
 
 class DomainApiView(TemplateView):
@@ -33,6 +37,7 @@ class DomainView(TemplateView):
                 d = DomainRecord.objects.get(name=name)
                 d.comment = comment
                 d.save()
+                logger.info(str(request.user + ' ' + action + ' ' + name + ' ' + comment))
             return get_ok()
         elif action == 'main_a_record':
             for name, record in data.items():
@@ -40,6 +45,7 @@ class DomainView(TemplateView):
                 r = DnsRecord.objects.get(pk=d.main_a_record_id)
                 r.value = record
                 r.save()
+                logger.info(str(request.user + ' ' + action + ' change ' + name + ' ' + record))
             return get_ok()
         elif action == 'folder':
             folder = Folder.objects.get(name=data['folder'])
@@ -47,10 +53,12 @@ class DomainView(TemplateView):
                 d = DomainRecord.objects.get(name=name)
                 d.folder = folder
                 d.save()
+                logger.info(str(request.user + ' ' + action + ' ' + name + folder))
             return get_ok()
         elif action == 'delete':
             for name in data:
                 DomainRecord.objects.get(name=name).delete()
+                logger.info(str(request.user + ' ' + action + ' ' + name))
             return get_ok()
 
 
@@ -76,9 +84,15 @@ class AdderDomainsView(TemplateView):
             reload_dns()
         elif request.POST['redirect'] == 'true':
             save_domain(domain, update, request.POST['records'])
+            logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: add domain:' + domain +
+                        ' update: ' + request.POST['update'] + ' dns records: ' + request.POST['records'])
             save_redirect(domain, update, request.POST['redir'])
+            logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: add domain:' + domain +
+                        ' update: ' + request.POST['update'] + ' redirect: ' + request.POST['redir'])
         else:
             save_domain(domain, update, request.POST['records'])
+            logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: add domain:' + domain +
+                        ' update: ' + request.POST['update'] + ' dns records: ' + request.POST['records'])
 
         return get_ok()
 
@@ -106,8 +120,14 @@ class DomainDetailView(TemplateView):
             for record in data:
                 if record['type'] == 'redirect':
                     domain.redirectrecord_set.get(name=record['name']).delete()
+                    logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: ' + action +
+                                ' domain: ' + domain.name + ' record: ' + str(record))
+                    reload_nginx()
                 else:
                     domain.dnsrecord_set.get(name=record['name'], type=record['type']).delete()
+                    logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: ' + action +
+                                ' domain: ' + domain.name + ' record: ' + str(record))
+                    rebuild_dns(domain.name)
             return get_ok()
 
 
