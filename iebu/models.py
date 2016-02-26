@@ -19,8 +19,14 @@ class DomainRecord(models.Model):
                                       on_delete=models.SET_NULL)
 
     def serialize(self):
+        try:
+            red1 = self.redirectrecord_set.get(name="/")
+            reditr = red1.value
+        except (KeyError, RedirectRecord.DoesNotExist):
+            reditr = None
         return {'name': self.name, 'comment': self.comment,
                 'status': self.status, 'main_a_record': self.main_a_record.value,
+                'redirect': reditr,
                 'folder': self.folder.name if self.folder is not None else None}
 
     def serial_detail(self):

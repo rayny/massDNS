@@ -37,7 +37,8 @@ class DomainView(TemplateView):
                 d = DomainRecord.objects.get(name=name)
                 d.comment = comment
                 d.save()
-                logger.info(str(request.user + ' ' + action + ' ' + name + ' ' + comment))
+                logger.info(str(datetime.now())+', user: ' + str(request.user) + ' action: ' + action + ' domain: ' +
+                            name + ' comment: ' + comment)
             return get_ok()
         elif action == 'main_a_record':
             for name, record in data.items():
@@ -45,7 +46,8 @@ class DomainView(TemplateView):
                 r = DnsRecord.objects.get(pk=d.main_a_record_id)
                 r.value = record
                 r.save()
-                logger.info(str(request.user + ' ' + action + ' change ' + name + ' ' + record))
+                logger.info(str(datetime.now())+', user: ' + str(request.user) + ' ' + action + ' change ' + name +
+                            ' ' + record)
             return get_ok()
         elif action == 'folder':
             folder = Folder.objects.get(name=data['folder'])
@@ -53,12 +55,13 @@ class DomainView(TemplateView):
                 d = DomainRecord.objects.get(name=name)
                 d.folder = folder
                 d.save()
-                logger.info(str(request.user + ' ' + action + ' ' + name + folder))
+                logger.info(str(datetime.now())+', user: ' + str(request.user) + ' ' + action + ' ' + name +
+                            ' ' + folder.name)
             return get_ok()
         elif action == 'delete':
             for name in data:
                 DomainRecord.objects.get(name=name).delete()
-                logger.info(str(request.user + ' ' + action + ' ' + name))
+                logger.info(str(datetime.now())+', user: ' + str(request.user) + ' ' + action + ' ' + name)
             return get_ok()
 
 
