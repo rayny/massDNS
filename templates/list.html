@@ -185,8 +185,9 @@ $(document).ready(function() {
                 name: 'folder', defaultContent: 'Н/Д'},
             {data: 'main_a_record', title: 'Основная А запись', name: 'main_a_record', defaultContent: 'Н/Д'},
         ],
-        "lengthMenu": [[10, 100, 1000, 10000, -1],
-            [10, 100, 1000, 10000, 'All']],
+        scroller: true,
+        scrollY:        400,
+
 
         //bFilter: false,
         "initComplete": function() {

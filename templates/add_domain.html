@@ -113,6 +113,9 @@ function add() {
 }
 
 var items=1;
+{% if names %}
+items = 0;
+{% endif %}
 function AddItem() {
   var div=document.getElementById("items1");
   var button=document.getElementById("add");
@@ -159,6 +162,7 @@ function AddItem() {
 
         <br/>
         <div ID="items1">
+            {% if not names %}
 
 
               <strong>имя 1: </strong><input type="text" id="name1" value="@" name="item1" size="10">
@@ -170,6 +174,7 @@ function AddItem() {
                 <option value="TXT">TXT-запись</option>
               </select>
               <strong>значение 1: </strong><input type="text" id="value1" value="{{ default_ip }}" name="item1" size="10"><br>
+            {% endif %}
               <input type="button" value="Добавить DNS запись" onClick="AddItem();" ID="add">
     </div> </div>
 {% endblock %}
