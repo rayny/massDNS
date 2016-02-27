@@ -66,13 +66,13 @@ function add_text_search(column) {
         });
 }
 
-function construct_footer() {
+/*function construct_footer() {
     add_text_search(this.api().column('name:name'));
     add_text_search(this.api().column('comment:name'));
     add_select_search(this.api().column('status:name'));
     add_select_search(this.api().column('folder:name'));
     add_select_search(this.api().column('main_a_record:name'));
-}
+}*/
 
 function select_all() {
     table.$('tr', {"filter":"applied"}).addClass('selected');
@@ -196,8 +196,10 @@ $(document).ready(function() {
             add_text_search(this.api().column('comment:name'));
             add_select_search(this.api().column('status:name'));
             add_select_search(this.api().column('folder:name'));
-            add_select_search(this.api().column('main_a_record:name'));
-            makelinks()
+            add_text_search(this.api().column('main_a_record:name'));
+            add_text_search(this.api().column('redirect:name'));
+            makelinks();
+            setInterval(makelinks, 100);
         },
         language: trans,
         dom: 'B<"right"lr>tip',
@@ -225,11 +227,13 @@ function change_checked() {
 
 function makelinks() {
 $(".sorting_1").html(function(index, oldHtml) {
-    var url = '{% url 'detail' %}';
-    var str1;
-    url+='?name='+oldHtml;
-    str1 = "<a href=\""+url+"\">"+oldHtml+"</a>";
-    return str1
+    if (oldHtml[0]!="<") {
+        var url = '{% url 'detail' %}';
+        var str1;
+        url+='?name='+oldHtml;
+        str1 = "<a href=\""+url+"\">"+oldHtml+"</a>";
+        return str1
+    } else {return oldHtml}
 });}
 </script>{% endblock %}
 
@@ -255,6 +259,7 @@ $(".sorting_1").html(function(index, oldHtml) {
  
         <tfoot>
             <tr>
+                <th></th>
                 <th></th>
                 <th></th>
                 <th></th>
