@@ -57,8 +57,8 @@ function add_select_search(column) {
     } );
 }
 
-function add_text_search(column) {
-    $('<input>').attr('type', 'text').appendTo($(column.footer()).empty())
+function add_text_search(column, placeholder) {
+    $('<input>').attr({type: 'text', placeholder: placeholder}).appendTo($(column.footer()).empty())
         .on( 'keyup change', function () {
             if (column.search() !== this.value) {
                 column.search(this.value).draw();
@@ -192,12 +192,12 @@ $(document).ready(function() {
 
         //bFilter: false,
         "initComplete": function() {
-            add_text_search(this.api().column('name:name'));
-            add_text_search(this.api().column('comment:name'));
-            add_select_search(this.api().column('status:name'));
-            add_select_search(this.api().column('folder:name'));
-            add_text_search(this.api().column('main_a_record:name'));
-            add_text_search(this.api().column('redirect:name'));
+            add_text_search(this.api().column('name:name'), 'Домен');
+            add_text_search(this.api().column('comment:name'), 'Комментарий');
+            add_text_search(this.api().column('status:name'), 'Статус');
+            add_text_search(this.api().column('folder:name'), 'Папка');
+            add_text_search(this.api().column('main_a_record:name'), 'А-запись');
+            add_text_search(this.api().column('redirect:name'), 'Редирект');
             makelinks();
             setInterval(makelinks, 100);
         },
@@ -225,6 +225,10 @@ function change_checked() {
     window.location = url + '?names=' + names
 }
 
+$(document).ready(function() {
+   $('.buttfolder').button()
+});
+
 function makelinks() {
 $(".sorting_1").html(function(index, oldHtml) {
     if (oldHtml[0]!="<") {
@@ -241,7 +245,7 @@ $(".sorting_1").html(function(index, oldHtml) {
     <h1>Список доменов</h1>
     <p><span>Добавить в папку: </span>
         {% for folder in folders %}
-            <button onclick="add_to_folder('{{ folder }}')">{{ folder }}</button>
+            <button class="buttfolder" onclick="add_to_folder('{{ folder }}')">{{ folder }}</button>
         {% endfor %}
     </p>
     <table id="main_table" class="display dt-body-center">
