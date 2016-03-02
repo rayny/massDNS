@@ -2,6 +2,7 @@ from .models import DomainRecord
 import os
 import codecs
 import datetime
+from subprocess import Popen, PIPE
 
 basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REFRESH = 28800
@@ -83,3 +84,11 @@ def reload_nginx():
 
     f.write(source)
     f.close()
+
+
+def restart_services():
+    p = Popen(['sudo', './home/rayny/reload_services.sh'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    ans = str(out)+str(err)
+    print(out)
+    return ans

@@ -58,6 +58,19 @@
         <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.1.2/js/buttons.jqueryui.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/scroller/1.4.1/js/dataTables.scroller.js"></script>
         <script type="text/javascript" src="https://cdn.datatables.net/select/1.1.2/js/dataTables.select.js"></script>
+    <script>
+        function applysend() {
+            event.preventDefault();
+            $.post({% url 'api' %}, {action:'applychanges', csrfmiddlewaretoken: '{{ csrf_token }}'})
+                    .success(function(resp){
+                        alert(resp.data);
+                    })
+                    .error(function(){
+                        alert('sending error');
+                    });
+            return false;
+        }
+    </script>
 
 
 
@@ -71,6 +84,7 @@
            <div class="left_buttons2 buttons"><a href="{% url 'adder' %}" style="padding: 0.3em;">Добавить</a></div>
 
             {% if user.is_authenticated %}
+                <div class="left_buttons2 buttons applybutton" ><a onclick="applysend()" href=".">применить все изменения</a></div>
                 <div class="right_buttons2 buttons"><a href="/admin/" style="float: right; padding: 0.3em;">Админка</a></div>
                 <div class="right_buttons2 buttons"><a href="{% url 'logout' %}" style="float: right; padding: 0.3em;">Выйти</a></div>
             {% endif %}

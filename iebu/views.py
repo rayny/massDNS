@@ -5,7 +5,7 @@ from .models import DomainRecord, DnsRecord, Folder, RedirectRecord
 from .json_resp import get_ok, get_error
 import json
 from iebu_project.settings import DEFAULT_IP
-from .filerenderer import rebuild_dns, reload_dns, reload_nginx
+from .filerenderer import rebuild_dns, reload_dns, reload_nginx, restart_services
 import logging
 from datetime import datetime
 # Create your views here.
@@ -19,6 +19,15 @@ class DomainApiView(TemplateView):
     def get(self, request):
         data = [domain.serialize() for domain in DomainRecord.objects.all()]
         return get_ok(data)
+
+    @method_decorator(login_required)
+    def post(self, request):
+        if request.POST['action'] == 'applychanges':
+            reload_dns()
+            reload_nginx()
+            ans = restart_services()
+            return get_ok(ans)
+
 
 
 class DomainView(TemplateView):
