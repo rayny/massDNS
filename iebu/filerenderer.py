@@ -3,6 +3,7 @@ import os
 import codecs
 import datetime
 from subprocess import Popen, PIPE
+from iebu_project.settings import DEFAULT_IP
 
 basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REFRESH = 28800
@@ -45,8 +46,15 @@ def _zone_str_create(domain):
              "    86400 )    ;minimum TTL of 1 day\n"
     dom = DomainRecord.objects.get(name=domain)
     choices = dom.dnsrecord_set.all()
+    result += "@ " + str(TTL) + " IN NS ns1" + "\n"
+    result += "@ " + str(TTL) + " IN NS ns2" + "\n"
+    result += "ns1 " + str(TTL) + " IN A " + DEFAULT_IP + "\n"
+    result += "ns2 " + str(TTL) + " IN A " + DEFAULT_IP + "\n"
     for node in choices:
-        result += node.name+" "+str(TTL)+" IN "+node.type+" "+node.value+"\n"
+        if node.type == 'MX':
+            result += node.name+" "+str(TTL)+" IN "+node.type+" 10 "+node.value+"\n"
+        else:
+            result += node.name+" "+str(TTL)+" IN "+node.type+" "+node.value+"\n"
     return result
 
 
@@ -68,8 +76,8 @@ def _nginx_str_create():
     source = DomainRecord.objects.all()
     for domain in source:
         for redirect in domain.redirectrecord_set.all():
-            result += "server {\n\ listen 80;\n  server_name  "+domain.name+";\n\
-                       rewrite ^ "+redirect.value+"$request_uri? permanent;\n}"
+            result += "server {\n listen 80;\n  server_name  "+domain.name+";\n\
+                       rewrite ^ "+redirect.value+"$request_uri? permanent;\n}\n"
     return result
 
 
@@ -87,7 +95,7 @@ def reload_nginx():
 
 
 def restart_services():
-    p = Popen(['sudo', './home/rayny/reload_services.sh'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    p = Popen('/home/iebu/iebu/reload_services.sh', shell=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
     out, err = p.communicate()
     ans = str(out)+str(err)
     print(out)
